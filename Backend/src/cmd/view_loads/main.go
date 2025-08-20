@@ -1,4 +1,4 @@
-package viewloads
+package main
 
 import (
 	"drumkit.com/interview/src/gateway"

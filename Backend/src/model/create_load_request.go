@@ -1,5 +1,7 @@
 package model
 
+import "strings"
+
 // CreateLoadRequest is the top-level struct for the create load request body.
 type CreateLoadRequest struct {
 	ExternalTMSLoadID string           `json:"externalTMSLoadID"`
@@ -161,4 +163,111 @@ type CLSpecifications struct {
 	Seal              bool `json:"seal"`
 	CustomBonded      bool `json:"customBonded"`
 	Labor             bool `json:"labor"`
+}
+
+type ShipmentStatusCode string
+
+const (
+	StatusQuoteActive       ShipmentStatusCode = "2100"
+	StatusTendered          ShipmentStatusCode = "2101"
+	StatusCovered           ShipmentStatusCode = "2102"
+	StatusDispatched        ShipmentStatusCode = "2103"
+	StatusAtPickup          ShipmentStatusCode = "2104"
+	StatusEnRoute           ShipmentStatusCode = "2105"
+	StatusAtDelivery        ShipmentStatusCode = "2106"
+	StatusDelivered         ShipmentStatusCode = "2107"
+	StatusReadyForBilling   ShipmentStatusCode = "2108"
+	StatusProcessing        ShipmentStatusCode = "2109"
+	StatusCarrierPaid       ShipmentStatusCode = "2110"
+	StatusCustomerPaid      ShipmentStatusCode = "2111"
+	StatusCompleted         ShipmentStatusCode = "2112"
+	StatusCanceled          ShipmentStatusCode = "2113"
+	StatusQuoteInactive     ShipmentStatusCode = "2114"
+	StatusPickedUp          ShipmentStatusCode = "2115"
+	StatusRouteComplete     ShipmentStatusCode = "2116"
+	StatusTenderOffered     ShipmentStatusCode = "2117"
+	StatusTenderAccepted    ShipmentStatusCode = "2118"
+	StatusTenderRejected    ShipmentStatusCode = "2119"
+	StatusDraft             ShipmentStatusCode = "2120"
+	StatusShipmentReady     ShipmentStatusCode = "2121"
+	StatusAcquiringLocation ShipmentStatusCode = "2123"
+	StatusCustomsHold       ShipmentStatusCode = "2124"
+	StatusArrived           ShipmentStatusCode = "2125"
+	StatusAvailable         ShipmentStatusCode = "2126"
+	StatusOutGated          ShipmentStatusCode = "2127"
+	StatusInGated           ShipmentStatusCode = "2129"
+	StatusArrivingToPort    ShipmentStatusCode = "2131"
+	StatusBerthing          ShipmentStatusCode = "2132"
+	StatusUnloading         ShipmentStatusCode = "2133"
+	StatusRamped            ShipmentStatusCode = "2134"
+	StatusDeramped          ShipmentStatusCode = "2135"
+	StatusDeparted          ShipmentStatusCode = "2136"
+	StatusHeld              ShipmentStatusCode = "2137"
+	StatusOutForDelivery    ShipmentStatusCode = "2138"
+	StatusInTransShipment   ShipmentStatusCode = "2139"
+	StatusOnHold            ShipmentStatusCode = "2140"
+)
+
+// StatusCodeForValue converts a human-friendly status value (e.g. "Covered", "Quote")
+// into the numeric code string. Returns empty string and false if unknown.
+func StatusCodeForValue(value string) (ShipmentStatusCode, bool) {
+	if value == "" {
+		return "", false
+	}
+	key := strings.ToLower(strings.TrimSpace(value))
+
+	var m = map[string]ShipmentStatusCode{
+		"quote":              StatusQuoteActive,
+		"quote active":       StatusQuoteActive,
+		"tendered":           StatusTendered,
+		"covered":            StatusCovered,
+		"dispatched":         StatusDispatched,
+		"at pickup":          StatusAtPickup,
+		"en route":           StatusEnRoute,
+		"at delivery":        StatusAtDelivery,
+		"delivered":          StatusDelivered,
+		"ready for billing":  StatusReadyForBilling,
+		"processing":         StatusProcessing,
+		"carrier paid":       StatusCarrierPaid,
+		"customer paid":      StatusCustomerPaid,
+		"completed":          StatusCompleted,
+		"canceled":           StatusCanceled,
+		"quote inactive":     StatusQuoteInactive,
+		"picked up":          StatusPickedUp,
+		"route complete":     StatusRouteComplete,
+		"tender offered":     StatusTenderOffered,
+		"tender accepted":    StatusTenderAccepted,
+		"tender rejected":    StatusTenderRejected,
+		"draft":              StatusDraft,
+		"shipment ready":     StatusShipmentReady,
+		"acquiring location": StatusAcquiringLocation,
+		"customs hold":       StatusCustomsHold,
+		"arrived":            StatusArrived,
+		"available":          StatusAvailable,
+		"out gated":          StatusOutGated,
+		"in gated":           StatusInGated,
+		"arriving to port":   StatusArrivingToPort,
+		"berthing":           StatusBerthing,
+		"unloading":          StatusUnloading,
+		"ramped":             StatusRamped,
+		"deramped":           StatusDeramped,
+		"departed":           StatusDeparted,
+		"held":               StatusHeld,
+		"out for delivery":   StatusOutForDelivery,
+		"in trans shipment":  StatusInTransShipment,
+		"on hold":            StatusOnHold,
+	}
+
+	// try exact match; also try simplified key without extra words
+	if code, ok := m[key]; ok {
+		return code, true
+	}
+	// fallback: try first word (e.g., "Quote" from "Quote - something")
+	parts := strings.Fields(key)
+	if len(parts) > 0 {
+		if code, ok := m[parts[0]]; ok {
+			return code, true
+		}
+	}
+	return "", false
 }

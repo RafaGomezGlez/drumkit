@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"drumkit.com/interview/src/model"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -69,6 +70,68 @@ func (suite *TurvoAPITestSuite) TestRetrieveLoads_Success() {
 	suite.T().Logf("Retrieved loads: %+v", loads)
 }
 
+func (suite *TurvoAPITestSuite) TestCreateLoad_Success() {
+	// Prepare a valid CreateLoadRequest
+	loadReq := []model.CreateLoadRequest{
+		{
+			Pickup: model.CLPickup{
+				Name:     "test",
+				ApptTime: "2023-10-01T08:00:00Z",
+				City:     "Chicago",
+				State:    "IL",
+				Country:  "USA",
+			},
+			Consignee: model.CLConsignee{
+				Name:     "test",
+				ApptTime: "2023-10-01T17:00:00Z",
+				City:     "Los Angeles",
+				State:    "CA",
+				Country:  "USA",
+			},
+			Status: "Covered",
+			Customer: model.CLCustomer{
+				Name:          "Test Customer",
+				ExternalTMSId: "973069",
+			},
+			Specifications: model.CLSpecifications{
+				MinTempFahrenheit: 32,
+				MaxTempFahrenheit: 75,
+			},
+			TotalWeight: 10000,
+		},
+	}
+	err := suite.gw.CreateLoad(loadReq, 21, 10)
+	suite.Require().NoError(err)
+}
+
+func (suite *TurvoAPITestSuite) TestRetrieveLocations_Success() {
+	locations, err := suite.gw.RetrieveLocations("test")
+	suite.Require().NoError(err)
+	suite.NotEmpty(locations)
+	suite.T().Logf("Retrieved locations: %+v", locations)
+}
+
+func (suite *TurvoAPITestSuite) TestRetrieveLoads_InvalidToken() {
+	origToken := suite.gw.Token
+	suite.gw.Token = "invalid_token"
+	_, err := suite.gw.RetrieveLoads("21", "10")
+	suite.Error(err)
+	suite.gw.Token = origToken // restore
+}
+
+func (suite *TurvoAPITestSuite) TestCreateLoad_InvalidRequest() {
+	// Missing required fields
+	loadReq := []model.CreateLoadRequest{
+		{
+			Pickup:      model.CLPickup{},
+			Consignee:   model.CLConsignee{},
+			Status:      "",
+			TotalWeight: 0,
+		},
+	}
+	err := suite.gw.CreateLoad(loadReq, 21, 10)
+	suite.Error(err)
+}
 func TestTurvoAPITestSuite(t *testing.T) {
 	suite.Run(t, new(TurvoAPITestSuite))
 }

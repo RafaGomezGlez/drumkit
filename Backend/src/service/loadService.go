@@ -6,17 +6,29 @@ import (
 )
 
 type LoadService struct {
-	repo *gateway.TurvoAPIGateway
+	gw *gateway.TurvoAPIGateway
 }
 
-func NewLoadService(repo *gateway.TurvoAPIGateway) *LoadService {
-	return &LoadService{repo: repo}
+func NewLoadService(gw *gateway.TurvoAPIGateway) *LoadService {
+	return &LoadService{gw: gw}
 }
 
 func (s *LoadService) CreateLoad(load model.CreateLoadRequest) error {
-	return s.repo.CreateLoad([]model.CreateLoadRequest{load})
+	pickUp, err := s.gw.RetrieveLocations(load.Pickup.Name)
+	if err != nil {
+		return err
+	}
+	PickUpId := pickUp[0].ID
+
+	Delivery, err := s.gw.RetrieveLocations(load.Consignee.Name)
+	if err != nil {
+		return err
+	}
+
+	DeliveryId := Delivery[0].ID
+	return s.gw.CreateLoad([]model.CreateLoadRequest{load}, PickUpId, DeliveryId)
 }
 
 func (s *LoadService) RetrieveLoads(start, pageSize string) ([]model.Shipment, error) {
-	return s.repo.RetrieveLoads(start, pageSize)
+	return s.gw.RetrieveLoads(start, pageSize)
 }
