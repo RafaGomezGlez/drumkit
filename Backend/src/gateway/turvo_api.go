@@ -7,18 +7,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"drumkit.com/interview/src/model"
-)
-
-const (
-	baseURL      = "https://my-sandbox-publicapi.turvo.com/v1"
-	apiKey       = "9VjKgnIlQS1255cn7cRvJ6jNf8Z4MElP1PGgBTsH"
-	clientID     = "publicapi"
-	clientSecret = "secret"
-	username     = "axle@wickerparklogistics.com"
-	password     = "DZJ@pcu_qzd8ecz0fgw"
 )
 
 type AuthRequestBody struct {
@@ -41,17 +33,23 @@ type httpClient interface {
 }
 
 type TurvoAPIGateway struct {
-	Host   string
-	Client httpClient
-	Token  string
+	Host         string
+	Client       httpClient
+	Token        string
+	APIKey       string
+	ClientID     string
+	ClientSecret string
+	Username     string
+	Password     string
 }
 
-func getAuthToken() (string, error) {
-	tokenURL := baseURL + "/oauth/token"
+// getAuthToken is a method so it can use values stored on the gateway instance.
+func (r *TurvoAPIGateway) getAuthToken() (string, error) {
+	tokenURL := r.Host + "/oauth/token"
 	requestBody, err := json.Marshal(AuthRequestBody{
 		GrantType: "password",
-		Username:  username,
-		Password:  password,
+		Username:  r.Username,
+		Password:  r.Password,
 		Scope:     "read+trust+write",
 		Type:      "business",
 	})
@@ -64,12 +62,12 @@ func getAuthToken() (string, error) {
 		return "", fmt.Errorf("error creating HTTP request: %w", err)
 	}
 
-	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("x-api-key", r.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
 	q := req.URL.Query()
-	q.Add("client_id", clientID)
-	q.Add("client_secret", clientSecret)
+	q.Add("client_id", r.ClientID)
+	q.Add("client_secret", r.ClientSecret)
 	req.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
@@ -100,18 +98,52 @@ func getAuthToken() (string, error) {
 	return tokenResponse.AccessToken, nil
 }
 
+// NewTurvoAPIGateway reads credentials from environment variables (with sensible defaults)
+// and initializes the gateway instance. This avoids package-level globals.
 func NewTurvoAPIGateway() *TurvoAPIGateway {
-	token, err := getAuthToken()
+	host := os.Getenv("TURVO_BASE_URL")
+	if host == "" {
+		return nil
+	}
+	apiKey := os.Getenv("TURVO_API_KEY")
+	if apiKey == "" {
+		return nil
+	}
+	clientID := os.Getenv("TURVO_CLIENT_ID")
+	if clientID == "" {
+		return nil
+	}
+	clientSecret := os.Getenv("TURVO_CLIENT_SECRET")
+	if clientSecret == "" {
+		return nil
+	}
+	username := os.Getenv("TURVO_USERNAME")
+	if username == "" {
+		return nil
+	}
+	password := os.Getenv("TURVO_PASSWORD")
+	if password == "" {
+		return nil
+	}
+
+	gw := &TurvoAPIGateway{
+		Host:         host,
+		Client:       &http.Client{},
+		APIKey:       apiKey,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Username:     username,
+		Password:     password,
+	}
+
+	token, err := gw.getAuthToken()
 	if err != nil {
 		panic(fmt.Sprintf("failed to authenticate: %v", err))
 	}
-	return &TurvoAPIGateway{
-		Host:   baseURL,
-		Client: &http.Client{},
-		Token:  token,
-	}
-}
+	gw.Token = token
 
+	return gw
+}
 func (r *TurvoAPIGateway) RetrieveLoads(start string, pageSize string) ([]model.Shipment, error) {
 	u, err := url.Parse(fmt.Sprintf("%s/shipments/list", r.Host))
 	if err != nil {
@@ -133,7 +165,7 @@ func (r *TurvoAPIGateway) RetrieveLoads(start string, pageSize string) ([]model.
 	}
 
 	req.Header.Set("Authorization", "Bearer "+r.Token)
-	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("x-api-key", r.APIKey)
 
 	resp, err := r.Client.Do(req)
 	if err != nil {
@@ -173,7 +205,7 @@ func (r *TurvoAPIGateway) CreateLoad(loads []model.CreateLoadRequest) error {
 		}
 
 		req.Header.Set("Authorization", "Bearer "+r.Token)
-		req.Header.Set("x-api-key", apiKey)
+		req.Header.Set("x-api-key", r.APIKey)
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := r.Client.Do(req)
