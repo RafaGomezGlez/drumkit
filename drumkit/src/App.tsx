@@ -1,26 +1,22 @@
-import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import { PrimeReactProvider } from 'primereact/api';
+import { Button } from 'primereact/button';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import type { ComponentType } from 'react';
+import Header from './component/header';
+import Body from './component/body';
+
+interface MyAppProps {
+  Component: ComponentType<any>;
+  pageProps: any;
 }
 
-export default App;
+export default function MyApp({ Component, pageProps }: MyAppProps) {
+  return (
+    <PrimeReactProvider>
+      <Component {...pageProps} />
+      <Header />
+      <Body />
+    </PrimeReactProvider>
+  );
+}
