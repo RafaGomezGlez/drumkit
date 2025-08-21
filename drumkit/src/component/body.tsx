@@ -1,68 +1,71 @@
-import React from 'react';
-import { Card } from 'primereact/card';
+import React, { useState } from 'react';
+import { useViewLoadsQuery, useCreateLoadMutation } from '../features/drumkitAPI';
+import TableView from './tableView';
+import NavigationSidebar from './NavigationSidebar';
+import ErrorDisplay from './ErrorDisplay';
+import ActionBar from './ActionBar';
+import CreateLoadDialog from './CreateLoadDialog';
+import { colors } from '../styles/typography';
 
 const Body: React.FC = () => {
-    return (
+    const [showDialog, setShowDialog] = useState(false);
+    const [first, setFirst] = useState(0);
+    const [rows, setRows] = useState(25);
+
+    // Make the query call with pagination parameters
+    const { data, error, isLoading } = useViewLoadsQuery({
+        start: first.toString(),
+        pageSize: rows.toString()
+    });
+
+    const [createLoad, { isLoading: isCreatingLoad }] = useCreateLoadMutation();
+
+    const handlePageChange = (event: any) => {
+        setFirst(event.first);
+        setRows(event.rows);
+    };
+
+    const handleCreateLoad = async (loadData: any) => {
+        try {
+            await createLoad(loadData).unwrap();
+            
+            // Hide the dialog after successful creation
+            setShowDialog(false);
+        } catch (error) {
+            console.error('Failed to create load:', error);
+            throw error;
+        }
+    };
+
+    return ( 
         <div style={{ display: 'flex', height: '100vh' }}>
-            {/* Left Tab */}
-            <div style={{
-                width: '400px',
-                background: '#222',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
-                <span>Tab</span>
-            </div>
             {/* Main Body */}
             <div style={{
                 flex: 1,
-                background: '#f5f5f5',
-                padding: '24px'
+                background: colors.background.secondary,
+                padding: '24px',
+                overflow: 'auto'
             }}>
-                <Card 
-                    title="Drumkit Info" 
-                    subTitle="PrimeReact Card Example"
-                    style={{
-                        background: '#fff',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                        borderRadius: '8px',
-                        padding: '20px',
-                    }}
-                >
-                    <p>
-                        This is a simple drumkit application. 
-                        <br />
-                        <strong>Features:</strong>
-                        <ul>
-                            <li>Play drum sounds</li>
-                            <li>Customizable pads</li>
-                            <li>Responsive layout</li>
-                        </ul>
-                    </p>
-                </Card>
-                <Card 
-                    title="Drumkit Info" 
-                    subTitle="PrimeReact Card Example"
-                    style={{
-                        background: '#fff',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                        borderRadius: '8px',
-                        padding: '20px',
-                    }}
-                >
-                    <p>
-                        This is a simple drumkit application. 
-                        <br />
-                        <strong>Features:</strong>
-                        <ul>
-                            <li>Play drum sounds</li>
-                            <li>Customizable pads</li>
-                            <li>Responsive layout</li>
-                        </ul>
-                    </p>
-                </Card>
+                <ErrorDisplay error={error} />
+                
+                <ActionBar onCreateLoad={() => setShowDialog(true)} />
+                
+                {/* Display the table with API data */}
+                <TableView 
+                    data={data || []} 
+                    loading={isLoading}
+                    totalRecords={1000} // You may want to get this from API response
+                    first={first}
+                    rows={rows}
+                    onPage={handlePageChange}
+                />
+
+                <CreateLoadDialog 
+                    visible={showDialog} 
+                    onHide={() => setShowDialog(false)}
+                    onCreateLoad={handleCreateLoad}
+                    isLoading={isCreatingLoad}
+                />
             </div>
         </div>
     );

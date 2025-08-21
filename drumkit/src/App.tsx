@@ -1,6 +1,8 @@
 import './App.css';
 import { PrimeReactProvider } from 'primereact/api';
 import { Button } from 'primereact/button';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 
 import type { ComponentType } from 'react';
 import Header from './component/header';
@@ -13,10 +15,12 @@ interface MyAppProps {
 
 export default function MyApp({ Component, pageProps }: MyAppProps) {
   return (
-    <PrimeReactProvider>
-      <Component {...pageProps} />
-      <Header />
-      <Body />
-    </PrimeReactProvider>
+    <Provider store={store}>
+      <PrimeReactProvider>
+        <Component {...pageProps} />
+        <Header />
+        <Body />
+      </PrimeReactProvider>
+    </Provider>
   );
 }

@@ -12,14 +12,10 @@ const Header: React.FC = () => {
                 </h1>
             </div>
             <div style={{ flex: '1 1 50%', textAlign: 'left' }}>
-                <a href="/" style={{ marginRight: '1rem', color: '#fff', textDecoration: 'none' }}>Home</a>
-                <a href="/products" style={{ marginRight: '1rem', color: '#fff', textDecoration: 'none' }}>Products</a>
-                <a href="/support" style={{ color: '#fff', textDecoration: 'none' }}>Support</a>
+               
             </div>
             <div style={{ flex: '1 1 0%', textAlign: 'right' }}>
-                <Button label="🛒" className="p-button-rounded p-button-text" aria-label="Cart" style={{ marginRight: '0.5rem' }} />
-                <Button label="🔍" className="p-button-rounded p-button-text" aria-label="Search" style={{ marginRight: '0.5rem' }} />
-                <Button label="🔔" className="p-button-rounded p-button-text" aria-label="Notifications" />
+                
             </div>
             </div>
         </header>
